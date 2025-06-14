@@ -82,8 +82,21 @@ with tab2:
 
     with col2:
         st.subheader("🔹 Korelasi Quantity vs TotalAmount")
+
+        # Hanya ambil baris dengan data numerik valid
+        df_scatter = filtered_df.copy()
+        df_scatter = df_scatter[
+            df_scatter["Quantity"].notna() &
+            df_scatter["TotalAmount"].notna() &
+            (df_scatter["TotalAmount"] > 0)
+            ]
+        # Tambahan: pastikan bertipe numerik
+        df_scatter["Quantity"] = pd.to_numeric(df_scatter["Quantity"], errors="coerce")
+        df_scatter["TotalAmount"] = pd.to_numeric(df_scatter["TotalAmount"], errors="coerce")
+
+
         fig6 = px.scatter(
-            filtered_df,
+            df_scatter,
             x="Quantity",
             y="TotalAmount",
             color="ProductCategory",
