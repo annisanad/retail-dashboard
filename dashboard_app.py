@@ -1,36 +1,18 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from sqlalchemy import create_engine
 
 st.set_page_config(layout="wide", page_title="Dashboard Penjualan Retail")
 
-# Koneksi ke MySQL
-engine = create_engine("mysql+pymysql://root:(Kus040)@localhost:3306/retail_data")
-
 @st.cache_data(ttl=600)
 def load_data():
-    query = """
-    SELECT 
-        f.CustomerID,
-        f.Quantity,
-        f.Price,
-        f.TransactionDate,
-        f.PaymentMethod,
-        f.ProductCategory,
-        f.DiscountApplied,
-        f.TotalAmount,
-        f.Location,
-        d.Day,
-        d.Month,
-        d.Year,
-        d.DayName,
-        c.Gender
-    FROM fact_sales f
-    LEFT JOIN dim_date d ON f.TransactionDate = d.TransactionDate
-    LEFT JOIN dim_customer c ON f.CustomerID = c.CustomerID
-    """
-    return pd.read_sql(query, engine)
+    df_sales = pd.read_csv("fact_sales.csv")
+    df_customer = pd.read_csv("dim_customer.csv")
+    df_date = pd.read_csv("dim_date.csv")
+
+    df = df_sales.merge(df_date, how="left", on="TransactionDate") \
+                 .merge(df_customer, how="left", on="CustomerID")
+    return df
 
 df = load_data()
 
