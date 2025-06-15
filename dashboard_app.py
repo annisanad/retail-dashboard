@@ -71,7 +71,7 @@ with tab1:
         fig3.update_layout(barmode="stack")
         st.plotly_chart(fig3, use_container_width=True)
 
-# --- TAB 2 (Hanya 1 chart untuk uji coba) ---
+# --- TAB 2 ---
 with tab2:
     st.subheader("📉 Distribusi Diskon per Kategori Produk")
 
@@ -88,7 +88,7 @@ with tab2:
     df_box = df_box.sample(n=min(2000, len(df_box)), random_state=42)
 
     if df_box.empty:
-        st.warning("Tidak ada data yang cukup untuk menampilkan chart.")
+        st.warning("Tidak ada data yang cukup untuk menampilkan box plot.")
     else:
         fig = px.box(
             df_box,
@@ -99,5 +99,33 @@ with tab2:
         )
         st.plotly_chart(fig, use_container_width=True)
 
+    # === CHART 2: Repeat Purchase ===
+    st.subheader("🔁 Pola Pembelian Ulang (Binned Histogram per Kategori Produk)")
+    repeat_df = (
+        filtered_df.groupby(["CustomerID", "ProductCategory"])
+        .size().reset_index(name="RepeatCount")
+    )
 
+    bins = [0, 1, 2, 5, 10, 20, 50, 100, 5000]
+    labels = ["1", "2", "3–5", "6–10", "11–20", "21–50", "51–100", "101+"]
 
+    repeat_df["RepeatBin"] = pd.cut(repeat_df["RepeatCount"], bins=bins, labels=labels, right=True)
+
+    binned = (
+        repeat_df.groupby(["RepeatBin", "ProductCategory"])
+        .size().reset_index(name="JumlahPelanggan")
+    )
+
+    if binned.empty:
+        st.warning("Tidak ada data yang cukup untuk menampilkan histogram pembelian ulang.")
+    else:
+        fig_repeat = px.bar(
+            binned,
+            x="RepeatBin",
+            y="JumlahPelanggan",
+            color="ProductCategory",
+            barmode="group",
+            text_auto=True,
+            title="Distribusi Pembelian Ulang Pelanggan per Kategori Produk"
+        )
+        st.plotly_chart(fig_repeat, use_container_width=True)
