@@ -47,22 +47,41 @@ col2.metric("📦 Total Item Terjual", int(filtered_df['Quantity'].sum()))
 col3.metric("🧾 Jumlah Transaksi", filtered_df.shape[0])
 col4.metric("👥 Jumlah Pelanggan", filtered_df['CustomerID'].nunique())
 
-# Trend & Kategori
-st.subheader("📅 Trend Penjualan Harian")
-daily = filtered_df.groupby("TransactionDate", observed=True)["TotalAmount"].sum().reset_index()
-fig1 = px.line(daily, x="TransactionDate", y="TotalAmount", markers=True)
-st.plotly_chart(fig1, use_container_width=True)
+# Tabs
+tab1, tab2 = st.tabs(["📈 Trend & Kategori", "🔁 Repeat & Diskon"])
 
-col1, col2 = st.columns(2)
-with col1:
-    st.subheader("🏷️ Distribusi Penjualan per Kategori Produk")
-    product_sales = filtered_df.groupby("ProductCategory", observed=True)["TotalAmount"].sum().reset_index()
-    fig2 = px.pie(product_sales, names="ProductCategory", values="TotalAmount", hole=0.3)
-    st.plotly_chart(fig2, use_container_width=True)
+# --- TAB 1 ---
+with tab1:
+    st.subheader("📅 Trend Penjualan Harian")
+    daily = filtered_df.groupby("TransactionDate")["TotalAmount"].sum().reset_index()
+    fig1 = px.line(daily, x="TransactionDate", y="TotalAmount", markers=True)
+    st.plotly_chart(fig1, use_container_width=True)
 
-with col2:
-    st.subheader("📆 Penjualan Bulanan per Kategori (Stacked Bar)")
-    monthly = filtered_df.groupby(["Month", "ProductCategory"], observed=True)["TotalAmount"].sum().reset_index()
-    fig3 = px.bar(monthly, x="Month", y="TotalAmount", color="ProductCategory", text_auto=".2s")
-    fig3.update_layout(barmode="stack")
-    st.plotly_chart(fig3, use_container_width=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("🏷️ Distribusi Penjualan per Kategori Produk")
+        product_sales = filtered_df.groupby("ProductCategory")["TotalAmount"].sum().reset_index()
+        fig2 = px.pie(product_sales, names="ProductCategory", values="TotalAmount", hole=0.3)
+        st.plotly_chart(fig2, use_container_width=True)
+
+    with col2:
+        st.subheader("📆 Penjualan Bulanan per Kategori (Stacked Bar)")
+        monthly = filtered_df.groupby(["Month", "ProductCategory"], observed=False)["TotalAmount"].sum().reset_index()
+        fig3 = px.bar(monthly, x="Month", y="TotalAmount", color="ProductCategory", text_auto=".2s")
+        fig3.update_layout(barmode="stack")
+        st.plotly_chart(fig3, use_container_width=True)
+
+# --- TAB 2 (Hanya 1 chart untuk uji coba) ---
+with tab2:
+    st.subheader("📉 Distribusi Diskon per Kategori Produk")
+
+    # Pastikan kolom numerik
+    filtered_df["DiscountApplied"] = pd.to_numeric(filtered_df["DiscountApplied"], errors="coerce")
+
+    fig4 = px.box(
+        filtered_df.dropna(subset=["ProductCategory", "DiscountApplied"]),
+        x="ProductCategory",
+        y="DiscountApplied",
+        points="outliers"
+    )
+    st.plotly_chart(fig4, use_container_width=True)
