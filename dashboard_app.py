@@ -75,38 +75,29 @@ with tab1:
 with tab2:
     st.subheader("📉 Distribusi Diskon per Kategori Produk")
 
-    # Preprocess data
-    df_plot = filtered_df.copy()
-    df_plot["DiscountApplied"] = pd.to_numeric(df_plot["DiscountApplied"], errors="coerce")
-    df_plot = df_plot.dropna(subset=["ProductCategory", "DiscountApplied"])
+    # Hanya ambil kolom yang dibutuhkan & casting numerik
+    df_box = filtered_df[["ProductCategory", "DiscountApplied"]].copy()
+    df_box["DiscountApplied"] = pd.to_numeric(df_box["DiscountApplied"], errors="coerce")
 
-    # Optional: hanya ambil kategori dengan data cukup
-    top_categories = df_plot["ProductCategory"].value_counts()
-    selected_cats = top_categories[top_categories > 100].index.tolist()
-    df_plot = df_plot[df_plot["ProductCategory"].isin(selected_cats)]
+    # Drop NA & ambil hanya ProductCategory dominan
+    df_box = df_box.dropna(subset=["ProductCategory", "DiscountApplied"])
+    top_cats = df_box["ProductCategory"].value_counts().nlargest(6).index
+    df_box = df_box[df_box["ProductCategory"].isin(top_cats)]
 
-    col1, col2 = st.columns(2)
+    # Sampling agar tidak overload
+    df_box = df_box.sample(n=min(2000, len(df_box)), random_state=42)
 
-    with col1:
-        st.subheader("📦 Boxplot Diskon per Kategori")
-        fig_box = px.box(df_plot, x="ProductCategory", y="DiscountApplied", points="outliers")
-        st.plotly_chart(fig_box, use_container_width=True)
-
-    with col2:
-        st.subheader("🧮 Korelasi Quantity vs TotalAmount (simplified)")
-
-        df_plot["Quantity"] = pd.to_numeric(df_plot["Quantity"], errors="coerce")
-        df_plot["TotalAmount"] = pd.to_numeric(df_plot["TotalAmount"], errors="coerce")
-        df_plot = df_plot.dropna(subset=["Quantity", "TotalAmount"])
-
-        fig_scatter = px.scatter(
-            df_plot.sample(5000),  # sampling agar ringan
-            x="Quantity",
-            y="TotalAmount",
-            color="ProductCategory",
-            opacity=0.6,
-            hover_data=["CustomerID", "PaymentMethod"]
+    if df_box.empty:
+        st.warning("Tidak ada data yang cukup untuk menampilkan chart.")
+    else:
+        fig = px.box(
+            df_box,
+            x="ProductCategory",
+            y="DiscountApplied",
+            points="outliers",
+            title="Distribusi Diskon per Kategori Produk (Top 6 Kategori)"
         )
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
+
 
 
