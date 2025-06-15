@@ -75,13 +75,21 @@ with tab1:
 with tab2:
     st.subheader("📉 Distribusi Diskon per Kategori Produk")
 
-    # Pastikan kolom numerik
-    filtered_df["DiscountApplied"] = pd.to_numeric(filtered_df["DiscountApplied"], errors="coerce")
+    # Coba logging isi kolom
+    st.write("Contoh isi kolom DiscountApplied:")
+    st.write(filtered_df["DiscountApplied"].head(5))
 
-    fig4 = px.box(
-        filtered_df.dropna(subset=["ProductCategory", "DiscountApplied"]),
-        x="ProductCategory",
-        y="DiscountApplied",
-        points="outliers"
-    )
-    st.plotly_chart(fig4, use_container_width=True)
+    try:
+        df_box = filtered_df.copy()
+        df_box["DiscountApplied"] = pd.to_numeric(df_box["DiscountApplied"], errors="coerce")
+        df_box = df_box.dropna(subset=["ProductCategory", "DiscountApplied"])
+
+        fig4 = px.box(
+            df_box,
+            x="ProductCategory",
+            y="DiscountApplied",
+            points="outliers"
+        )
+        st.plotly_chart(fig4, use_container_width=True)
+    except Exception as e:
+        st.error(f"Gagal menampilkan box plot: {e}")
