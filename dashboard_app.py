@@ -75,21 +75,27 @@ with tab1:
 with tab2:
     st.subheader("📉 Distribusi Diskon per Kategori Produk")
 
-    # Coba logging isi kolom
-    st.write("Contoh isi kolom DiscountApplied:")
-    st.write(filtered_df["DiscountApplied"].head(5))
-
     try:
         df_box = filtered_df.copy()
         df_box["DiscountApplied"] = pd.to_numeric(df_box["DiscountApplied"], errors="coerce")
         df_box = df_box.dropna(subset=["ProductCategory", "DiscountApplied"])
 
+        # Hitung total penjualan per kategori
+        top_categories = (
+            df_box.groupby("ProductCategory")["TotalAmount"]
+            .sum().sort_values(ascending=False).head(10).index.tolist()
+        )
+
+        df_box = df_box[df_box["ProductCategory"].isin(top_categories)]
+
         fig4 = px.box(
             df_box,
             x="ProductCategory",
             y="DiscountApplied",
-            points="outliers"
+            points="outliers",
+            title="Top 10 Kategori Produk Berdasarkan Diskon"
         )
         st.plotly_chart(fig4, use_container_width=True)
+
     except Exception as e:
         st.error(f"Gagal menampilkan box plot: {e}")
