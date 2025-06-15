@@ -75,18 +75,38 @@ with tab1:
 with tab2:
     st.subheader("📉 Distribusi Diskon per Kategori Produk")
 
-    try:
-        df_box = filtered_df.copy()
-        df_box["DiscountApplied"] = pd.to_numeric(df_box["DiscountApplied"], errors="coerce")
-        df_box = df_box.dropna(subset=["ProductCategory", "DiscountApplied"])
+    # Preprocess data
+    df_plot = filtered_df.copy()
+    df_plot["DiscountApplied"] = pd.to_numeric(df_plot["DiscountApplied"], errors="coerce")
+    df_plot = df_plot.dropna(subset=["ProductCategory", "DiscountApplied"])
 
-        # Filter hanya kategori yang punya minimal 50 transaksi
-        valid_cats = df_box["ProductCategory"].value_counts()
-        valid_cats = valid_cats[valid_cats > 50].index.tolist()
-        df_box = df_box[df_box["ProductCategory"].isin(valid_cats)]
+    # Optional: hanya ambil kategori dengan data cukup
+    top_categories = df_plot["ProductCategory"].value_counts()
+    selected_cats = top_categories[top_categories > 100].index.tolist()
+    df_plot = df_plot[df_plot["ProductCategory"].isin(selected_cats)]
 
-        st.dataframe(df_box[["ProductCategory", "DiscountApplied"]].sample(10))
+    col1, col2 = st.columns(2)
 
-    except Exception as e:
-        st.error(f"Gagal menampilkan data: {e}")
+    with col1:
+        st.subheader("📦 Boxplot Diskon per Kategori")
+        fig_box = px.box(df_plot, x="ProductCategory", y="DiscountApplied", points="outliers")
+        st.plotly_chart(fig_box, use_container_width=True)
+
+    with col2:
+        st.subheader("🧮 Korelasi Quantity vs TotalAmount (simplified)")
+
+        df_plot["Quantity"] = pd.to_numeric(df_plot["Quantity"], errors="coerce")
+        df_plot["TotalAmount"] = pd.to_numeric(df_plot["TotalAmount"], errors="coerce")
+        df_plot = df_plot.dropna(subset=["Quantity", "TotalAmount"])
+
+        fig_scatter = px.scatter(
+            df_plot.sample(5000),  # sampling agar ringan
+            x="Quantity",
+            y="TotalAmount",
+            color="ProductCategory",
+            opacity=0.6,
+            hover_data=["CustomerID", "PaymentMethod"]
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
 
