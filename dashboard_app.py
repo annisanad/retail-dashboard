@@ -80,22 +80,13 @@ with tab2:
         df_box["DiscountApplied"] = pd.to_numeric(df_box["DiscountApplied"], errors="coerce")
         df_box = df_box.dropna(subset=["ProductCategory", "DiscountApplied"])
 
-        # Hitung total penjualan per kategori
-        top_categories = (
-            df_box.groupby("ProductCategory")["TotalAmount"]
-            .sum().sort_values(ascending=False).head(10).index.tolist()
-        )
+        # Filter hanya kategori yang punya minimal 50 transaksi
+        valid_cats = df_box["ProductCategory"].value_counts()
+        valid_cats = valid_cats[valid_cats > 50].index.tolist()
+        df_box = df_box[df_box["ProductCategory"].isin(valid_cats)]
 
-        df_box = df_box[df_box["ProductCategory"].isin(top_categories)]
-
-        fig4 = px.box(
-            df_box,
-            x="ProductCategory",
-            y="DiscountApplied",
-            points="outliers",
-            title="Top 10 Kategori Produk Berdasarkan Diskon"
-        )
-        st.plotly_chart(fig4, use_container_width=True)
+        st.dataframe(df_box[["ProductCategory", "DiscountApplied"]].sample(10))
 
     except Exception as e:
-        st.error(f"Gagal menampilkan box plot: {e}")
+        st.error(f"Gagal menampilkan data: {e}")
+
